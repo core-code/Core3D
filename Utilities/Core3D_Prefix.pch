@@ -1,0 +1,503 @@
+#ifdef __APPLE__
+    #import <AvailabilityMacros.h>
+	#import <TargetConditionals.h>
+	#include <mach/mach.h>
+	#include <mach/mach_time.h>
+#endif
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+#endif
+
+
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE // iPhone
+	#undef TARGET_OS_MAC
+
+	#import <QuartzCore/QuartzCore.h>
+
+	#ifdef __OBJC__
+		#import <UIKit/UIKit.h>
+
+		#include <OpenGLES/EAGL.h>
+		#include <OpenGLES/EAGLDrawable.h>
+	#endif
+
+    #include <OpenGLES/ES2/gl.h>
+    #include <OpenGLES/ES2/glext.h>
+
+
+	#ifndef DISABLE_SOUND
+		#include <OpenAL/al.h>
+		#include <OpenAL/alc.h>
+	#endif
+
+    #if !defined(IPAD) && !defined(IPHONE)
+        #error we currently don't support universal iPhone/iPad apps and want either IPHONE or IPAD to be defined as a preprocessor macro for a static screen size
+    #endif
+
+    #ifdef IPAD
+        #define IOS_SCREEN_WIDTH 1024 
+        #define IOS_SCREEN_HEIGHT 768 
+        static const char ipad = 1;
+        static const char iphone = 0;
+        static const char iOS = 0;
+    #endif
+    #ifdef IPHONE
+        #define IOS_SCREEN_WIDTH 480 
+        #define IOS_SCREEN_HEIGHT 320
+        static const char ipad = 0;
+        static const char iphone = 1;
+        static const char iOS = 1;
+    #endif
+
+    #define glBindVertexArray glBindVertexArrayOES
+    #define glDeleteVertexArrays glDeleteVertexArraysOES
+    #define glGenVertexArrays glGenVertexArraysOES
+    #define GL_COORD_REPLACE GL_COORD_REPLACE_OES
+	#define GL_DEPTH_COMPONENT24 GL_DEPTH_COMPONENT
+	#define NSSize CGSize
+
+    enum {
+        kCALayerNotSizable   = 0x00,
+        kCALayerMinXMargin   = 0x01,
+        kCALayerWidthSizable = 0x02,
+        kCALayerMaxXMargin   = 0x04,
+        kCALayerMinYMargin   = 0x08,
+        kCALayerHeightSizable= 0x10,
+        kCALayerMaxYMargin   = 0x20,
+    };
+
+	#include <AudioToolbox/AudioToolbox.h>
+
+#else
+    static const char iOS = 0;
+
+	#if defined(TARGET_OS_MAC) && TARGET_OS_MAC && (!defined(WIN32) && (!defined(linux))) // Mac
+
+        #ifndef DISABLE_SOUND
+            #define ALUT 1         
+        #endif
+
+        #ifdef __OBJC__
+			#import <Cocoa/Cocoa.h>
+		#endif
+        #ifdef SDL
+            #include "SDL.h"
+            #include "SDL_mixer.h"
+        #endif
+
+//        #if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_6
+//            #include <OpenGL/gl3.h>
+//            #include <OpenGL/glext.h>
+//            #define GL_COMPARE_R_TO_TEXTURE GL_COMPARE_REF_TO_TEXTURE
+//            #define GL_ALL_ATTRIB_BITS      0x000fffff
+//            #define GL_POINT_SPRITE         0x8861
+//            #define GL_PERSPECTIVE_CORRECTION_HINT 0x0C50
+//            #warning TODO VBOs, VAOs
+//        #else
+            #include <OpenGL/gl.h>
+//        #endif
+
+        #ifndef kCGLPFAOpenGLProfile
+            #define kCGLPFAOpenGLProfile 99
+            #define kCGLOGLPVersion_Legacy 0x1000
+            #define kCGLOGLPVersion_3_2_Core 0x3200
+        #endif
+
+        #define glBindVertexArray glBindVertexArrayAPPLE
+        #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+        #define glGenVertexArrays glGenVertexArraysAPPLE
+
+		#include <Carbon/Carbon.h>
+		#include <AudioToolbox/AudioToolbox.h>
+        #ifndef DISABLE_SOUND
+            #include <OpenAL/al.h>
+            #include <OpenAL/alc.h>
+        #endif
+        #include <malloc/malloc.h>
+        #include <sys/stat.h>
+
+		#undef TARGET_OS_IPHONE
+
+        #define LOAD_NIB(x, o)         [NSBundle loadNibNamed:x owner:o]
+
+	#else										// Win / Linux
+		#ifdef __OBJC__
+			#import <Cocoa/Cocoa.h>
+		#endif
+        #define SDL 1               // currently no win/linux without SDL
+
+        #include "SDL.h"
+        #include "SDL_mixer.h"
+
+        #ifndef DISABLE_SOUND
+            #define ALUT 1         
+        #endif
+
+		//#include <windows.h>
+
+
+
+		#include <stdio.h>
+		#include <stdlib.h>
+		#include <stdint.h>
+		#include <stdarg.h>
+        #include <assert.h>
+
+
+
+
+        #ifdef __COCOTRON__
+
+            #import <CoreGraphics/CGImage.h>
+
+            #include <OpenGL/gl.h>
+            #include <OpenGL/glext.h>
+            #if defined(__OBJC__) 
+                #import <QuartzCore/CALayer.h>
+            #endif
+
+            #define LOAD_NIB(x, o)         [NSBundle loadNibNamed:x owner:o]
+
+        #elif defined(GNUSTEP)
+            #if defined(GNUSTEP_BASE_MAJOR_VERSION) &&  defined(GNUSTEP_BASE_MINOR_VERSION) && \
+                   ( GNUSTEP_BASE_MAJOR_VERSION < 1 || \
+                    (GNUSTEP_BASE_MAJOR_VERSION == 1 && \
+                    GNUSTEP_BASE_MINOR_VERSION < 24))
+                #warning need gnustep base 1.24.0 or later
+            #endif
+            #if defined(GNUSTEP_GUI_MAJOR_VERSION) &&  defined(GNUSTEP_GUI_MINOR_VERSION) && \
+                ( GNUSTEP_GUI_MAJOR_VERSION == 0 && \
+                 GNUSTEP_GUI_MINOR_VERSION < 22 )
+                #warning need gnustep gui 0.22 or later
+            #endif
+
+
+            #include <GL/gl.h>
+            #include <GL/glext.h>
+
+            #ifdef __OBJC__
+                typedef NSSize CGSize;
+                typedef NSRect CGRect;
+                typedef NSPoint CGPoint;
+                typedef NSTimeInterval CFTimeInterval;
+                typedef CFTimeInterval CFAbsoluteTime;
+            #endif
+
+            #define CGSizeMake NSMakeSize
+            #define CGRectMake NSMakeRect
+            #define CGPointMake NSMakePoint
+            #define NSRectFromCGRect(x) (x)
+
+            enum {
+                kCALayerNotSizable   = 0x00,
+                kCALayerMinXMargin   = 0x01,
+                kCALayerWidthSizable = 0x02,
+                kCALayerMaxXMargin   = 0x04,
+                kCALayerMinYMargin   = 0x08,
+                kCALayerHeightSizable= 0x10,
+                kCALayerMaxYMargin   = 0x20,
+            };
+
+            #define TRUE YES
+            #define FALSE NO 
+
+            #define LOAD_NIB(x, o)         [NSBundle loadNibNamed:[x stringByAppendingString:@"-gnustep"] owner:o]
+
+
+            #define  kVK_F1  SDLK_F1
+            #define  kVK_F2  SDLK_F2
+            #define  kVK_F3  SDLK_F3
+            #define  kVK_F4  SDLK_F4
+            #define  kVK_F5  SDLK_F5
+            #define  kVK_F6  SDLK_F6
+            #define  kVK_F7  SDLK_F7
+            #define  kVK_F8  SDLK_F8
+            #define  kVK_F9  SDLK_F9
+            #define  kVK_ANSI_W SDLK_w
+            #define  kVK_ANSI_Q SDLK_q
+            #define  kVK_ANSI_A SDLK_a
+            #define  kVK_ANSI_D SDLK_d
+            #define  kVK_ANSI_S  SDLK_s
+            #define  kVK_ANSI_KeypadMinus SDLK_KP_MINUS
+            #define  kVK_ANSI_KeypadPlus SDLK_KP_PLUS
+        #else
+            #error cannot deploy to win/linux without cocotron or gnustep
+        #endif
+
+        #ifndef DISABLE_SOUND
+            #include <AL/al.h>
+            #include <AL/alc.h>
+        #endif
+
+
+		#ifdef WIN32
+			#include "opengl_win32.h"
+		#endif
+		#ifdef __linux__
+			#include "opengl_linux.h"
+		#endif
+
+        #define glGenFramebuffers glGenFramebuffersEXT
+        #define glDeleteFramebuffers glDeleteFramebuffersEXT
+        #define glCheckFramebufferStatus glCheckFramebufferStatusEXT
+        #define glBindFramebuffer glBindFramebufferEXT
+        #define glFramebufferTexture2D glFramebufferTexture2DEXT
+        #ifndef GL_FRAMEBUFFER
+            #define GL_FRAMEBUFFER GL_FRAMEBUFFER_EXT
+            #define GL_COLOR_ATTACHMENT0 GL_COLOR_ATTACHMENT0_EXT
+            #define GL_DEPTH_ATTACHMENT GL_DEPTH_ATTACHMENT_EXT
+            #define GL_FRAMEBUFFER_COMPLETE GL_FRAMEBUFFER_COMPLETE_EXT
+        #endif
+
+		#undef TARGET_OS_IPHONE
+		#undef TARGET_OS_MAC
+	#endif
+
+#endif
+
+
+#ifdef __cplusplus
+    #ifdef __OBJC__ 
+        #ifdef __linux__ // fuck glibc and u.d.
+            #undef __block
+            #define __block __glibc_block
+        #endif
+
+        #include <string>
+        #include <map>
+        #include <deque>
+        typedef std::deque<id> MutableArray;
+        typedef std::map<std::string, id> MutableDictionary;
+        typedef std::map<std::string, MutableArray *> MutableDictionaryA;
+
+        #ifdef __linux__
+            #undef __block
+            #define __block __attribute__((__blocks__(byref)))
+        #endif
+    #endif
+	#import <cml/cml.h>
+	using namespace std;
+	//using namespace cml;
+	typedef cml::vector< float, cml::external<3> > vector3fe;
+	typedef cml::vector< float, cml::external<4> > vector4fe;
+	typedef cml::matrix< float, cml::external<4,4>, cml::col_basis, cml::col_major > matrix44f_ce;
+	typedef cml::matrix< double, cml::external<4,4>, cml::col_basis, cml::col_major > matrix44d_ce;
+	typedef cml::matrix44f_c matrix44f_c;
+	typedef cml::matrix33f_c matrix33f_c;
+	typedef cml::vector2f vector2f;
+	typedef cml::vector3f vector3f;
+	typedef cml::vector4f vector4f;
+
+    vector3f component_mult3(const vector3f& v1, const vector3f& v2);
+    vector4f component_mult4(const vector4f& v1, const vector4f& v2);
+#endif
+
+static inline void fatal(const char *err, ...) __attribute__((noreturn)) __attribute__((format(printf, 1, 0)));
+#ifdef SDL
+    static inline void fatal(const char *err, ...) {
+#ifdef __OBJC__
+        [[NSUserDefaults standardUserDefaults] synchronize];
+#endif
+        va_list ap;	va_start (ap, err);	vfprintf (stderr, err, ap);	va_end (ap); SDL_ShowCursor(SDL_ENABLE); SDL_Quit(); exit(1); }
+#else //if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE || defined(linux) || defined(WIN32) || !defined(__OBJC__)
+    static inline void fatal(const char *err, ...) {va_list ap; va_start (ap, err); vfprintf (stderr, err, ap); va_end (ap); exit(1); }
+#endif
+
+#ifdef DEBUG
+    #define glError() { \
+        GLenum err = glGetError(); \
+        while (err != GL_NO_ERROR) { \
+            fprintf(stderr, "glError: %s (%i) caught at %s:%u\n", (char *)myErrorString(err), err, __FILE__, __LINE__); \
+            err = glGetError(); \
+            exit(1); \
+        } \
+    }
+#else
+	#define glError()
+#endif
+
+#ifdef WIN32
+#define pow_f pow
+#else
+#define pow_f powf
+#endif
+
+#define SET1(obj,val1,arg1)									[obj set##val1:arg1];
+#define SET2(obj,val1,arg1,val2,arg2)						[obj set##val1:arg1];[obj set##val2:arg2];
+#define SET3(obj,val1,arg1,val2,arg2,val3,arg3)				[obj set##val1:arg1];[obj set##val2:arg2];[obj set##val3:arg3];
+#define SET4(obj,val1,arg1,val2,arg2,val3,arg3,val4,arg4)	[obj set##val1:arg1];[obj set##val2:arg2];[obj set##val3:arg3];[obj set##val4:arg4];
+
+#define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define CONTAINS(str, sub)  ([(str) rangeOfString:(sub) options:NSCaseInsensitiveSearch].location != NSNotFound)
+#define MAXLENGTH(str, len) ((([(str) length] <= (len)) ? (str) : [(str) substringToIndex:(len)]))
+
+
+#define $earray             ([NSArray array])
+#define $emarray            ([NSMutableArray array])
+#define $array(OBJS...)     ((NSArray *)([NSArray arrayWithObjects:OBJS, nil]))
+#define $marray(OBJS...)    ([NSMutableArray arrayWithObjects:OBJS, nil])
+#define $dict(PAIRS...)     ([NSDictionary dictionaryWithObjectsAndKeys:PAIRS, nil])
+#define $mdict(PAIRS...)    ([NSMutableDictionary dictionaryWithObjectsAndKeys:PAIRS, nil])
+#define $num(num)			([NSNumber numberWithFloat:num])
+#define $numd(num)			([NSNumber numberWithDouble:num])
+#define $numi(num)			([NSNumber numberWithInteger:num])
+#define $numui(num)			([NSNumber numberWithUnsignedInt:num])
+#define $string(str...)     ([NSString stringWithString:str])
+#define $stringcu8(x)       ([NSString stringWithUTF8String:x])
+#define $mstring(str)       ([NSMutableString stringWithString:str])
+#define $stringf(format...) ([NSString stringWithFormat:format])
+#define $mstringf(format...)([NSMutableString stringWithFormat:format])
+#define $default(key)       ([[NSUserDefaults standardUserDefaults] objectForKey:key])
+#define $defaulti(key)      ([[NSUserDefaults standardUserDefaults] integerForKey:key])
+#define $defaultf(key)      ([[NSUserDefaults standardUserDefaults] floatForKey:key])
+#define $remdefault(key)    ([[NSUserDefaults standardUserDefaults] removeObjectForKey:key])
+#define $setdefault(o, key) ([[NSUserDefaults standardUserDefaults] setObject:o forKey:key])
+#define $setdefaulti(i, key)([[NSUserDefaults standardUserDefaults] setInteger:i forKey:key])
+#define $setdefaultf(f, key)([[NSUserDefaults standardUserDefaults] setFloat:f forKey:key])
+#define $defaultsync        ([[NSUserDefaults standardUserDefaults] synchronize])
+#define $color(r,g,b,a)     ([NSColor colorWithCalibratedRed:(r) green:(g) blue:(b) alpha:(a)])
+#define $predf(format...)   ([NSPredicate predicateWithFormat:format])
+
+#define APPLICATION_SUPPORT_DIR [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0]
+
+// lets you define custom types for collection classes that so that the compiler knows what type they return
+#define CUSTOM_ARRAY(classname) \
+@interface classname ## Array : NSArray \
+- (classname *)objectAtIndexedSubscript:(NSUInteger)index;\
+@end
+#define CUSTOM_MUTABLE_ARRAY(classname) \
+@interface Mutable ## classname ## Array : NSMutableArray \
+- (classname *)objectAtIndexedSubscript:(NSUInteger)index;\
+@end
+#define CUSTOM_DICTIONARY(classname) \
+@interface classname ## Dictionary : NSDictionary \
+- (classname *)objectForKeyedSubscript:(id)key;\
+@end
+#define CUSTOM_MUTABLE_DICTIONARY(classname) \
+@interface Mutable ## classname ## Dictionary : NSMutableDictionary \
+- (classname *)objectForKeyedSubscript:(id)key;\
+@end
+
+#ifndef NSDebugLog
+    #ifdef DEBUG
+        #define NSDebugLog NSLog
+    #else
+        #define NSDebugLog(format...)
+    #endif
+#endif
+
+
+#ifdef TARGET_OS_MAC
+
+// unsupported because our classes should be used and would get confused about caching
+#define glUseProgram(p)                 (fatal("calling unsupported function glUseProgram"))
+#define glBindTexture(ta, te)           (fatal("calling unsupported function glBindTexture - if you undef this make sure to set currentTexture = nil"))
+
+#import "StateUtilities.h"
+
+// unsupported because we track these states in StateUtilities and wanna call our wrappers
+#define glBlendColor(a, b, c, d)        (myBlendColor(a, b, c, d))
+#define glBlendFunc(s, d)               (myBlendFunc(s, d))
+#define glLineWidth(s, d)               (myLineWidth(s, d))
+#define glPolygonOffset(f, o)           (myPolygonOffset(f, o))
+#define glViewport(a,b,c,d)             (myViewport(a,b,c,d))
+#define glEnableVertexAttribArray(a)    (myEnableVertexAttribArray(a))
+#define glDisableVertexAttribArray(a)   (myDisableVertexAttribArray(a))
+#define glEnable(s)                     (fatal("calling unsupported function glEnable"))
+#define glDisable(s)                    (fatal("calling unsupported function glDisable"))
+#define glDepthMask(e)                  (fatal("calling unsupported function glDepthMask"))
+
+
+// unsupported because we don't support fixed function rendering anymore
+#define glEnableClientState(cap)        (fatal("calling unsupported function glEnableClientState"))
+#define glDisableClientState(cap)       (fatal("calling unsupported function glDisableClientState"))
+#define glVertexPointer(s1, t, s2, p)   (fatal("calling unsupported function glVertexPointer"))
+#define glTexCoordPointer(s1, t, s2, p) (fatal("calling unsupported function glTexCoordPointer"))
+#define glNormalPointer(t, s, p)        (fatal("calling unsupported function glNormalPointer"))
+#define glFogCoordPointer(t, s, p)      (fatal("calling unsupported function glFogCoordPointer"))
+#define glColorPointer(t, c, s, p)      (fatal("calling unsupported function glColorPointer"))
+#define glSecondaryColorPointer(c,t,s,p) (fatal("calling unsupported function glSecondaryColorPointer"))
+#define glEdgeFlagPointer(s, p)         (fatal("calling unsupported function glEdgeFlagPointer"))
+#define glColor3f(a, b, c)              (fatal("calling unsupported function glColor3f"))
+#define glColor3ub(a, b, c)             (fatal("calling unsupported function glColor3ub"))
+#define glColor4f(a, b, c, d)           (fatal("calling unsupported function glColor4f"))
+#define glColor4vf(a)                   (fatal("calling unsupported function glColor4vf"))
+#define glTranslatef(x, y, z)           (fatal("calling unsupported function glTranslatef"))
+#define glRotatef(a, x, y, z)           (fatal("calling unsupported function glRotatef"))
+#define glScalef(x, y, z)               (fatal("calling unsupported function glScalef"))
+#define glLoadIdentity                  (fatal("calling unsupported function glLoadIdentity"))
+#define glLoadMatrixf(m)                (fatal("calling unsupported function glLoadMatrixf"))
+#define glLoadMatrixd(m)                (fatal("calling unsupported function glLoadMatrixd"))
+#define glMultMatrixf(m)                (fatal("calling unsupported function glMultMatrixf"))
+#define glMultMatrixd(m)                (fatal("calling unsupported function glMultMatrixd"))
+#define glMatrixMode(m)                 (fatal("calling unsupported function glMatrixMode"))
+#define glPushMatrix()                  (fatal("calling unsupported function glPushMatrix"))
+#define glPopMatrix()                   (fatal("calling unsupported function glPopMatrix"))
+#define glPopClientAttrib()             (fatal("calling unsupported function glPopClientAttrib"))
+#define glPushClientAttrib(a)           (fatal("calling unsupported function glPushClientAttrib"))
+#define glBegin(a)                      (fatal("calling unsupported function glBegin"))
+#define glEnd()                         (fatal("calling unsupported function glEnd"))
+
+#undef GL_CLIENT_VERTEX_ARRAY_BIT
+#undef GL_POINT_SMOOTH
+#undef GL_CONSTANT_COLOR_EXT
+//#undef GL_POINT_SPRITE
+#undef GL_CLIENT_PIXEL_STORE_BIT
+#undef GL_PROJECTION_MATRIX
+#undef GL_MODELVIEW_MATRIX
+#undef GL_CLAMP
+#undef GL_INTENSITY
+//#undef GL_LUMINANCE
+#undef GL_PERSPECITVE_CORRECTION_HINT
+#undef GL_DEPTH_TEXTURE_MODE
+//#undef GL_ALL_ATTRIB_BITS
+#undef GL_GENERATE_MIPMAP
+#undef GL_VERTEX_ARRAY                  
+#undef GL_NORMAL_ARRAY                  
+#undef GL_COLOR_ARRAY                   
+#undef GL_INDEX_ARRAY                   
+#undef GL_TEXTURE_COORD_ARRAY           
+#undef GL_FRAMEBUFFER_EXT
+#endif
+         
+
+#ifdef GL_OES_VERSION_1_0
+    #error fixed_function_pipeline_unsupported
+#endif
+
+
+#ifndef NSAppKitVersionNumber10_7
+    #define NSAppKitVersionNumber10_7 1138
+#endif
+
+
+#ifdef __OBJC__
+#ifdef __BLOCKS__
+typedef void (^BasicBlock)(void);
+typedef void (^DoubleInBlock)(double input);
+typedef void (^StringInBlock)(NSString *input);
+typedef BOOL (^BoolOutBlock)(void);
+typedef int (^IntInOutBlock)(int input);
+typedef void (^IntInBlock)(int input);
+#endif
+#endif
+
+#ifdef TIMEDEMO
+#define IS_TIMEDEMO 1
+#else
+#define IS_TIMEDEMO $defaulti(@"timedemo")
+#endif 
+
+
+#define CPPPROPERTYSUPPORT_V3_H(name) @property (assign, nonatomic) v3 name##Vec;
+#define CPPPROPERTYSUPPORT_V3_M(name, namecapitalized) \
++ (NSSet *)keyPathsForValuesAffecting ## namecapitalized ## Vec { return [NSSet setWithObjects:[NSString stringWithUTF8String:#name], nil]; } \
+- (v3) name ## Vec { return {name[0], name[1], name[2]}; } \
+- (void)set ## namecapitalized ## Vec:(v3)newVec { [self set ## namecapitalized:vector3f(newVec.x, newVec.y, newVec.z)]; }
+
+#define CPPPROPERTYSUPPORT_V4_H(name) @property (assign, nonatomic) v4 name##Vec;
+#define CPPPROPERTYSUPPORT_V4_M(name, namecapitalized) \
++ (NSSet *)keyPathsForValuesAffecting ## namecapitalized ## Vec { return [NSSet setWithObjects:[NSString stringWithUTF8String:#name], nil]; } \
+- (v4) name ## Vec { return {name[0], name[1], name[2], name[3]}; } \
+- (void)set ## namecapitalized ## Vec:(v4)newVec { [self set ## namecapitalized:vector4f(newVec.x, newVec.y, newVec.z, newVec.w)]; }
