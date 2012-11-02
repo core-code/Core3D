@@ -5,9 +5,7 @@
 	#include <mach/mach_time.h>
 #endif
 
-#ifdef __OBJC__
-    #import <Foundation/Foundation.h>
-#endif
+
 
 
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE // iPhone
@@ -122,6 +120,9 @@
         #define LOAD_NIB(x, o)         [NSBundle loadNibNamed:x owner:o]
 
 	#else										// Win / Linux
+		#define __STDC_LIMIT_MACROS 1
+		#include <stdint.h>
+
 		#ifdef __OBJC__
 			#import <Cocoa/Cocoa.h>
 		#endif
@@ -140,7 +141,6 @@
 
 		#include <stdio.h>
 		#include <stdlib.h>
-		#include <stdint.h>
 		#include <stdarg.h>
         #include <assert.h>
 

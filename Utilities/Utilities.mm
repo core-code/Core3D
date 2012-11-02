@@ -254,6 +254,7 @@ void UnloadSound(SOUND_TYPE soundID)
 
 SOUND_TYPE LoadSound(NSString *name)
 {
+#ifndef DISABLE_SOUND
     if (!globalSettings.soundEnabled)
         return NULL;
     
@@ -261,10 +262,12 @@ SOUND_TYPE LoadSound(NSString *name)
     if (!chunk)
         NSLog(@"Error: could not LoadWAV named: %s", [name UTF8String]);
     return chunk;
+#endif
 }
 
 void Play_Sound(SOUND_TYPE soundID)
 {
+#ifndef DISABLE_SOUND
     if (!globalSettings.soundEnabled || !soundID)
         return;
     
@@ -272,12 +275,15 @@ void Play_Sound(SOUND_TYPE soundID)
     
     if (res == -1)
         NSLog(@"Warning: could not play chunk %lx", (long)soundID);
+#endif
 }
 
 void UnloadSound(SOUND_TYPE soundID)
 {
+#ifndef DISABLE_SOUND
     if (globalSettings.soundEnabled && soundID)
         Mix_FreeChunk(soundID);
+#endif
 }
 
 #else
