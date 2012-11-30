@@ -88,8 +88,8 @@ vertex_buffer_new( const char *format )
         start = end+1;
         free(desc);
         attribute->pointer = pointer;
-        stride += attribute->size*GL_TYPE_SIZE( attribute->type );
-        pointer+= attribute->size*GL_TYPE_SIZE( attribute->type );
+        stride += attribute->size*OpenGL_TYPE_SIZE( attribute->type );
+        pointer+= attribute->size*OpenGL_TYPE_SIZE( attribute->type );
         self->attributes[index] = attribute;
         index++;
     } while ( end && (index < MAX_VERTEX_ATTRIBUTE) );
@@ -223,7 +223,7 @@ vertex_buffer_print( vertex_buffer_t * self )
         }
         fprintf(stderr, "%dx%s (+%ld)\n",
                 self->attributes[i]->size, 
-                GL_TYPE_STRING( self->attributes[i]->type ),
+                OpenGL_TYPE_STRING( self->attributes[i]->type ),
                 (long) self->attributes[i]->pointer);
 
         i += 1;
@@ -589,7 +589,7 @@ vertex_attribute_parse( char *format )
             int size, index;
             char ctype;
             sscanf( format, "%dgn%d%c", &index, &size, &ctype );
-            GLenum type = GL_TYPE( ctype );
+            GLenum type = OpenGL_TYPE( ctype );
             return vertex_attribute_new( 0, index, size, type, GL_TRUE, 0, 0 );
         }
         else
@@ -597,7 +597,7 @@ vertex_attribute_parse( char *format )
             int size, index;
             char ctype;
             sscanf( format, "%dg%d%c", &index, &size, &ctype );
-            GLenum type = GL_TYPE( ctype );
+            GLenum type = OpenGL_TYPE( ctype );
             return vertex_attribute_new( 0, index, size, type, GL_FALSE, 0, 0 );
         }
     }
@@ -609,7 +609,7 @@ vertex_attribute_parse( char *format )
         int size;
         char ctarget, ctype;
         sscanf( format, "%c%d%c", &ctarget, &size, &ctype );
-        GLenum type = GL_TYPE( ctype );
+        GLenum type = OpenGL_TYPE( ctype );
         GLenum target = GL_VERTEX_ATTRIBUTE_TARGET( ctarget );
         return vertex_attribute_new( target, 0, size, type, GL_FALSE, 0, 0 );
     }
@@ -742,7 +742,7 @@ vertex_attribute_new( GLenum target,
 
 // ----------------------------------------------------------------------------
 GLenum
-GL_TYPE( char ctype )
+OpenGL_TYPE( char ctype )
 {
     switch( ctype )
     {
@@ -785,7 +785,7 @@ GL_VERTEX_ATTRIBUTE_TARGET( char ctarget )
 
 // ----------------------------------------------------------------------------
 GLuint 
-GL_TYPE_SIZE( GLenum gtype )
+OpenGL_TYPE_SIZE( GLenum gtype )
 {
     switch( gtype )
     {
@@ -807,7 +807,7 @@ GL_TYPE_SIZE( GLenum gtype )
 
 
 const char *
-GL_TYPE_STRING( GLenum gtype )
+OpenGL_TYPE_STRING( GLenum gtype )
 {
     switch( gtype )
     {

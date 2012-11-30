@@ -439,7 +439,7 @@ vertex_attribute_new( GLenum target,
  * @return       GL enum type
  */
   GLenum
-  GL_TYPE( char ctype );
+  OpenGL_TYPE( char ctype );
 
 
 /**
@@ -459,7 +459,7 @@ vertex_attribute_new( GLenum target,
  * @return       the size of the given type
  */
   GLuint
-  GL_TYPE_SIZE( GLenum gtype );
+  OpenGL_TYPE_SIZE( GLenum gtype );
 
 
 /**
@@ -469,7 +469,7 @@ vertex_attribute_new( GLenum target,
  * @return       the literal string describing the type
  */
   const char *
-  GL_TYPE_STRING( GLenum gtype );
+  OpenGL_TYPE_STRING( GLenum gtype );
 
 #ifdef __cplusplus
 }
