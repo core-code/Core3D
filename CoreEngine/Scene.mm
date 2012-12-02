@@ -99,7 +99,14 @@ VBO *currentVBO = nil;
         if (cd)
         {
             NSColor *value = [NSUnarchiver unarchiveObjectWithData:cd];
-            CGFloat c[4];
+#if defined(GNUSTEP_BASE_MAJOR_VERSION) &&  defined(GNUSTEP_BASE_MINOR_VERSION) && \
+( GNUSTEP_BASE_MAJOR_VERSION < 1 || \
+(GNUSTEP_BASE_MAJOR_VERSION == 1 && \
+GNUSTEP_BASE_MINOR_VERSION < 24))
+			float c[4];
+#else
+			CGFloat c[4];
+#endif            
             [value getComponents:c];
             globalSettings.outlineColor = vector4f(c[0], c[1], c[2], 1.0);
         }
