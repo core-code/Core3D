@@ -1,3 +1,6 @@
+#ifndef PCH
+#define PCH 1
+
 #ifdef __APPLE__
     #import <AvailabilityMacros.h>
 	#import <TargetConditionals.h>
@@ -501,3 +504,5 @@ typedef void (^IntInBlock)(int input);
 + (NSSet *)keyPathsForValuesAffecting ## namecapitalized ## Vec { return [NSSet setWithObjects:[NSString stringWithUTF8String:#name], nil]; } \
 - (v4) name ## Vec { return {name[0], name[1], name[2], name[3]}; } \
 - (void)set ## namecapitalized ## Vec:(v4)newVec { [self set ## namecapitalized:vector4f(newVec.x, newVec.y, newVec.z, newVec.w)]; }
+
+#endif
